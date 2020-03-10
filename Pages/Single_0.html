@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="../js/script_single0.js" type="module"></script>
+<script>
+var pv_f = function (c, r, n) {
+	var pv = 0;
+	for (var i = 1; i < n + 1; i++) {
+		var pv = pv + c / Math.pow (1 + r, i);
+	}
+	return pv;
+};
+var fv_f = function (c, r, n) {
+	var fv = 0;
+	for (var i = 0; i < n; i++) {
+		var fv = fv + c * Math.pow (1 + r, i);
+	}
+	return fv;
+};
+var fv_inc_f = function (c, r, g, n) {
+	var fv = 0;
+	for (var i = 0; i < n; i++) {
+		var fv = fv + (c * Math.pow (1 + r, n - i)) * Math.pow (1 + g, i);
+	}
+	return fv;
+};
+var fv_current_assets = function (profit_rate, age, retire_age, cash, financial_assets, properties, annual_income, increase_rate_income) {
+	if (age <= 45) {
+		var increase_year = 45 - age;
+		var fv_income = fv_inc_f (annual_income, profit_rate, increase_rate_income, increase_year) * Math.pow (1 + profit_rate, retire_age - 45) + fv_f (annual_income * Math.pow (1 + increase_rate_income, increase_year), profit_rate, retire_age - 45);
+	}
+	if (age > 45) {
+		var fv_income = fv_f (annual_income, profit_rate, retire_age - age);
+	}
+	return financial_assets * Math.pow (1 + profit_rate, retire_age - age) + fv_income;
+};
+var fv_liabilities = function (profit_rate, age, retire_age, annual_expense, dream_age_1, dream_expense_1, dream_age_2, dream_expense_2, dream_age_3, dream_expense_3, borrow_rate, liabilities) {
+	var pv_expense = fv_f (annual_expense, profit_rate, retire_age - age) + pv_f (annual_expense, profit_rate, 100 - retire_age);
+	if (dream_age_1 >= retire_age) {
+		var pv_dream_1 = dream_expense_1 / Math.pow (1 + profit_rate, dream_age_1 - retire_age);
+	}
+	else {
+		var pv_dream_1 = dream_expense_1 * Math.pow (1 + profit_rate, retire_age - dream_age_1);
+	}
+	if (dream_age_2 >= retire_age) {
+		var pv_dream_2 = dream_expense_2 / Math.pow (1 + profit_rate, dream_age_2 - retire_age);
+	}
+	else {
+		var pv_dream_2 = dream_expense_2 * Math.pow (1 + profit_rate, retire_age - dream_age_2);
+	}
+	if (dream_age_3 >= retire_age) {
+		var pv_dream_3 = dream_expense_3 / Math.pow (1 + profit_rate, dream_age_3 - retire_age);
+	}
+	else {
+		var pv_dream_3 = dream_expense_3 * Math.pow (1 + profit_rate, retire_age - dream_age_3);
+	}
+	return (((pv_expense + pv_dream_1) + pv_dream_2) + pv_dream_3) + liabilities * Math.pow (1 + borrow_rate, retire_age - age);
+};
+var func = function (i) {
+	var cash = document.getElementById ('cash').value;
+	var financial_assets = document.getElementById ('financial_assets').value;
+	var properties = document.getElementById ('property').value;
+	var annual_income = document.getElementById ('annual_income').value;
+	var increase_rate_income = document.getElementById ('increase_rate_income').value;
+	var age = document.getElementById ('age').value;
+	var retire_age = document.getElementById ('retire_age').value;
+	var annual_expense = document.getElementById ('annual_expense').value;
+	var dream_age_1 = document.getElementById ('dream_age_1').value;
+	var dream_expense_1 = document.getElementById ('dream_expense_1').value;
+	var dream_age_2 = document.getElementById ('dream_age_2').value;
+	var dream_expense_2 = document.getElementById ('dream_expense_2').value;
+	var dream_age_3 = document.getElementById ('dream_age_3').value;
+	var dream_expense_3 = document.getElementById ('dream_expense_3').value;
+	var liabilities = document.getElementById ('liability').value;
+	var borrow_rate = document.getElementById ('borrow_rate').value;
+	return fv_current_assets (i, age, retire_age, cash, financial_assets, properties, annual_income, increase_rate_income) - fv_liabilities (i, age, retire_age, annual_expense, dream_age_1, dream_expense_1, dream_age_2, dream_expense_2, dream_age_3, dream_expense_3, borrow_rate, liabilities);
+};
+var to_result = function () {
+	return fsolve (func, 0.05);
+};
+var fsolve = function (func, x) {
+	var delta = 1e-04;
+	var a = x;
+	while (func (a) >= 100 || func(a) <= - 100) {
+		var y = func (a + delta) - func (a);
+		if (y > 0) {
+			if (func (a) > 0) {
+				var a = a - delta;
+			}
+			else {
+				var a = a + delta;
+			}
+		}
+		else if (func (a) > 0) {
+			var a = a + delta;
+		}
+		else {
+			var a = a - delta;
+		}
+		if ( func (a) <= 1 && func(a) >= - 1) {
+			var delta = 1e-07;
+		}
+		
+	}
+	return a;
+};
+var print_out = function () {
+
+	var message = ('<h2>Return is ' + to_result ()) + '!</h2>';
+	document.getElementById ('content').innerHTML = message;
+};
+</script>
+</head>
+<body>
+<div>
+<section id = "input_information" class="col-md-4 col-sm-6 col-xs-12">
+<section>
+<p>年龄<input id="age" type="number"></p>
+<p>计划退休年龄<input id="retire_age" type="number"></p>
+<p>存款<input id="cash" type="number"></p>
+<p>金融资产<input id="financial_assets" type="number"></p>
+<p>房产<input id="property" type="number"></p>
+<p>贷款<input id="liability" type="number"></p>
+<p>贷款利率<input id="borrow_rate" type="number"></p>
+</section>
+<section>
+<p>目前年收入<input id="annual_income" type="number"></p>
+<p>预计年收入增长率(45岁以前）<input id="increase_rate_income" type="number"></p>
+<p>平均年支出<input id="annual_expense" type="number"></p>
+<p>诗与远方<br><a>实现年龄   <input id="dream_age_1" type="number"></a><a>所需支出<input id="dream_expense_1" type="number"></a><br><a>实现年龄   <input id="dream_age_2" type="number"></a><a>所需支出<input id="dream_expense_2" type="number"></a><br><a>实现年龄   <input id="dream_age_3" type="number"></a><a>所需支出<input id="dream_expense_3" type="number"></a></p>
+</section>
+<section>
+    <button onclick="print_out();">
+      理财建议
+    </button>
+</section>
+</section>
+<section id="content"></section>
+</div>
+</body>
+</html>
+
